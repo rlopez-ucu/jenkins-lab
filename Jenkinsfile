@@ -11,7 +11,7 @@ pipeline {
     }
 
     parameters {
-        string(name: 'VERSION', defaultValue: '1.0.0', description: 'Version a desplegar')
+        string(name: 'VERSION', defaultValue: '1.1.0', description: 'Version a desplegar')
         booleanParam(name: 'EJECUTAR_TESTS', defaultValue: true, description: 'Correr los tests')
     }
 
@@ -61,12 +61,23 @@ pipeline {
             }
         }
 
+        stage('Build imagen') {
+            steps {
+                dir(APP_DIR) {
+                    sh 'docker build --build-arg APP_VERSION=${VERSION} -t libreria-api:${VERSION} .'
+                }
+            }
+        }
+
         stage('Deploy') {
             when {
-                branch 'main'
+                anyOf {
+                    branch 'main'
+                    branch pattern: 'release/.*', comparator: 'REGEXP'
+                }
             }
             steps {
-                echo "Desplegando ${params.VERSION} desde main"
+                echo "Desplegando ${params.VERSION} desde ${env.BRANCH_NAME}"
             }
         }
     }
