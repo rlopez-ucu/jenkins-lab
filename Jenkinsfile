@@ -64,7 +64,7 @@ pipeline {
         stage('Build imagen') {
             steps {
                 dir(APP_DIR) {
-                    sh 'docker build --build-arg APP_VERSION=${VERSION} -t libreria-api:${VERSION} .'
+                    sh "docker build --build-arg APP_VERSION=${params.VERSION} -t libreria-api:${params.VERSION} ."
                 }
             }
         }
