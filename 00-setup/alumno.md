@@ -7,13 +7,13 @@
 ### Linux / macOS
 
 ```bash
-cd <REPO_DE_LA_CLASE>/jenkins/00-setup
+cd jenkins-lab/jenkins/00-setup
 ```
 
 ### Windows (PowerShell)
 
 ```powershell
-cd <REPO_DE_LA_CLASE>\jenkins\00-setup
+cd jenkins-lab\jenkins\00-setup
 ```
 
 Verificar que Docker esté andando (en Windows y macOS, Docker Desktop tiene que estar abierto):

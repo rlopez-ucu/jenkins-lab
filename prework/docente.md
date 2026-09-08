@@ -16,10 +16,10 @@ gh repo edit <USUARIO_DOCENTE>/libreria-api --template
 
    Sin `gh`: crear el repositorio en la web, hacer push, y en Settings marcar "Template repository".
 
-3. Reemplazar los placeholders `<ORG_O_USUARIO>`, `<REPO_DE_LA_CLASE>` y `<USUARIO_DOCENTE>` en todas las guías:
+3. Reemplazar los placeholders `rlopez-ucu`, `jenkins-lab` y `<USUARIO_DOCENTE>` en todas las guías:
 
 ```bash
-grep -rl '<USUARIO_DOCENTE>\|<ORG_O_USUARIO>\|<REPO_DE_LA_CLASE>' . | xargs sed -i 's|<USUARIO_DOCENTE>|tuusuario|g; s|<ORG_O_USUARIO>|tuusuario|g; s|<REPO_DE_LA_CLASE>|devops-ucu|g'
+grep -rl '<USUARIO_DOCENTE>\|rlopez-ucu\|jenkins-lab' . | xargs sed -i 's|<USUARIO_DOCENTE>|tuusuario|g; s|rlopez-ucu|tuusuario|g; s|jenkins-lab|devops-ucu|g'
 ```
 
 4. Hacer la clase entera, de principio a fin, en una máquina limpia (o borrando el volumen `jenkins_home`). Anotar los tiempos.

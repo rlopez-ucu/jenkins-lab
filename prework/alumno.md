@@ -88,16 +88,16 @@ entre 5 y 15 minutos según la conexión.
 ### Linux / macOS
 
 ```bash
-git clone https://github.com/<ORG_O_USUARIO>/<REPO_DE_LA_CLASE>.git
-cd <REPO_DE_LA_CLASE>/jenkins/00-setup
+git clone https://github.com/rlopez-ucu/jenkins-lab.git
+cd jenkins-lab/jenkins/00-setup
 docker compose build
 ```
 
 ### Windows (PowerShell)
 
 ```powershell
-git clone https://github.com/<ORG_O_USUARIO>/<REPO_DE_LA_CLASE>.git
-cd <REPO_DE_LA_CLASE>\jenkins\00-setup
+git clone https://github.com/rlopez-ucu/jenkins-lab.git
+cd jenkins-lab\jenkins\00-setup
 docker compose build
 ```
 

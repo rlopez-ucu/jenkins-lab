@@ -13,14 +13,14 @@ Volver a la carpeta `00-setup` del repo de la clase y crear el archivo `.env` a 
 ### Linux / macOS
 
 ```bash
-cd <REPO_DE_LA_CLASE>/jenkins/00-setup
+cd jenkins-lab/jenkins/00-setup
 cp .env.example .env
 ```
 
 ### Windows (PowerShell)
 
 ```powershell
-cd <REPO_DE_LA_CLASE>\jenkins\00-setup
+cd jenkins-lab\jenkins\00-setup
 Copy-Item .env.example .env
 ```
 
