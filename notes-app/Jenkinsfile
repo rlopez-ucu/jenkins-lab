@@ -7,43 +7,50 @@ pipeline {
 
     environment {
         IMAGE = 'notes-app'
+        APP_DIR = 'notes-app'   // the app lives in a subfolder of the repo
     }
 
     stages {
         stage('Instalar dependencias') {
             steps {
-                sh '''
-                    python3 -m venv .venv
-                    . .venv/bin/activate
-                    pip install --quiet -r requirements.txt
-                '''
+                dir(APP_DIR) {
+                    sh '''
+                        python3 -m venv .venv
+                        . .venv/bin/activate
+                        pip install --quiet -r requirements.txt
+                    '''
+                }
             }
         }
 
         stage('Tests unitarios') {
             steps {
-                sh '''
-                    . .venv/bin/activate
-                    pytest -v --junitxml=reports/junit.xml
-                '''
+                dir(APP_DIR) {
+                    sh '''
+                        . .venv/bin/activate
+                        pytest -v --junitxml=reports/junit.xml
+                    '''
+                }
             }
         }
 
         stage('Build imagen Docker') {
             steps {
-                sh '''
-                    docker build --build-arg APP_VERSION=${BUILD_NUMBER} \
-                        -t ${IMAGE}:${BUILD_NUMBER} \
-                        -t ${IMAGE}:latest .
-                    docker images ${IMAGE}
-                '''
+                dir(APP_DIR) {
+                    sh '''
+                        docker build --build-arg APP_VERSION=${BUILD_NUMBER} \
+                            -t ${IMAGE}:${BUILD_NUMBER} \
+                            -t ${IMAGE}:latest .
+                        docker images ${IMAGE}
+                    '''
+                }
             }
         }
     }
 
     post {
         always {
-            junit 'reports/junit.xml'
+            junit "${APP_DIR}/reports/junit.xml"
         }
         success {
             echo "Imagen ${IMAGE}:${BUILD_NUMBER} lista"
