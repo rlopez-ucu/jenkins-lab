@@ -1,0 +1,91 @@
+pipeline {
+    agent none
+
+    options {
+        timestamps()
+    }
+
+    stages {
+        stage('Verificar') {
+            failFast true
+            parallel {
+                stage('Lint') {
+                    agent any
+                    steps {
+                        sh '''
+                            python3 -m venv .venv
+                            . .venv/bin/activate
+                            pip install --quiet -r requirements.txt
+                            ruff check .
+                        '''
+                    }
+                }
+                stage('Tests') {
+                    agent any
+                    steps {
+                        sh '''
+                            python3 -m venv .venv
+                            . .venv/bin/activate
+                            pip install --quiet -r requirements.txt
+                            pytest --junitxml=reports/junit.xml
+                        '''
+                        junit 'reports/junit.xml'
+                    }
+                }
+            }
+        }
+
+        stage('Aprobar deploy') {
+            when {
+                branch 'main'
+            }
+            // Sin agent: no ocupa un executor mientras espera.
+            steps {
+                timeout(time: 10, unit: 'MINUTES') {
+                    input message: 'Desplegar a produccion?', ok: 'Desplegar'
+                }
+            }
+        }
+
+        stage('Deploy') {
+            agent any
+            when {
+                branch 'main'
+            }
+            steps {
+                echo 'Desplegando...'
+            }
+        }
+    }
+
+    post {
+        success {
+            notificar('Build OK', 3066993)
+        }
+        failure {
+            notificar('Build FALLO', 15158332)
+        }
+        aborted {
+            notificar('Build cancelado', 9807270)
+        }
+    }
+}
+
+def notificar(String titulo, int color) {
+    node {
+        withCredentials([string(credentialsId: 'discord-webhook', variable: 'WEBHOOK')]) {
+            sh """
+                curl -s -H 'Content-Type: application/json' -d @- "\$WEBHOOK" <<'JSON'
+                {
+                  "embeds": [{
+                    "title": "${titulo}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    "description": "Rama: ${env.BRANCH_NAME ?: '-'}\\nDuracion: ${currentBuild.durationString}",
+                    "url": "${env.BUILD_URL}",
+                    "color": ${color}
+                  }]
+                }
+JSON
+            """
+        }
+    }
+}

@@ -1,0 +1,46 @@
+services:
+  jenkins:
+    build: .
+    image: ucu-devops/jenkins:lts
+    container_name: jenkins
+    # root so the jenkins process can use the host's docker socket on every OS.
+    # Fine for a lab machine, not for production.
+    user: root
+    ports:
+      - "8080:8080"   # web UI
+      - "50000:50000" # inbound agents (extra module)
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+
+  # Tunnel so GitHub can reach Jenkins on your laptop. Needs NGROK_AUTHTOKEN in .env
+  # Start with:  docker compose --profile ngrok up -d
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    profiles: ["ngrok"]
+    command: http jenkins:8080
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:-}
+    ports:
+      - "4040:4040"   # ngrok inspector, shows the public URL
+    depends_on:
+      - jenkins
+
+  # Alternative tunnel with no account. URL is printed in the logs.
+  # Start with:  docker compose --profile cloudflared up -d
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    profiles: ["cloudflared"]
+    command: tunnel --url http://jenkins:8080
+    depends_on:
+      - jenkins
+
+volumes:
+  jenkins_home:
+
+networks:
+  default:
+    name: jenkins_net

@@ -1,0 +1,3 @@
+@Library('ucu-lib') _
+
+pipelinePython(imagen: '<usuario-dockerhub>/libreria-api')

@@ -1,0 +1,50 @@
+// Module 3, final version written in the UI.
+pipeline {
+    agent any
+
+    environment {
+        APP = 'libreria-api'
+        SALUDO = 'Hola'
+    }
+
+    stages {
+        stage('Preparar') {
+            steps {
+                echo "${SALUDO}, construyendo ${APP} build #${BUILD_NUMBER}"
+                sh 'python3 --version'
+                sh 'docker version --format "{{.Server.Version}}"'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh '''
+                    echo "Corriendo tests..."
+                    sleep 2
+                    echo "Tests OK"
+                    exit 0
+                '''
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo "Desplegando ${APP}"
+                sh 'echo "Desplegado build ${BUILD_NUMBER} el $(date)" > resultado.txt'
+                archiveArtifacts artifacts: 'resultado.txt'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Esto corre siempre, pase lo que pase'
+        }
+        success {
+            echo 'Build verde'
+        }
+        failure {
+            echo 'Build rojo: aca iria un aviso a Slack o Discord'
+        }
+    }
+}

@@ -1,0 +1,75 @@
+pipeline {
+    agent none   // NUEVO: cada stage elige su agente
+
+    options {
+        timestamps()
+    }
+
+    environment {
+        IMAGE = "<usuario-dockerhub>/libreria-api"
+        SMOKE = "smoke-${BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Test') {
+            agent {
+                docker {
+                    image 'python:3.12-slim'       // NUEVO: corre en este contenedor
+                    args '--volumes-from jenkins'  // NUEVO: comparte el workspace
+                    reuseNode true
+                }
+            }
+            steps {
+                sh '''
+                    python3 --version
+                    pip install --quiet -r requirements.txt
+                    ruff check .
+                    pytest --junitxml=reports/junit.xml
+                '''
+            }
+            post {
+                always {
+                    junit 'reports/junit.xml'
+                }
+            }
+        }
+
+        stage('Build imagen') {
+            agent any   // NUEVO: este necesita el docker del controller
+            steps {
+                sh 'docker build --build-arg APP_VERSION=${BUILD_NUMBER} -t ${IMAGE}:${BUILD_NUMBER} .'
+            }
+        }
+
+        stage('Smoke test') {
+            agent any
+            steps {
+                sh '''
+                    docker run -d --rm --name ${SMOKE} --network jenkins_net ${IMAGE}:${BUILD_NUMBER}
+                    sleep 3
+                    curl -sf http://${SMOKE}:5000/health
+                    echo
+                    docker rm -f ${SMOKE}
+                '''
+            }
+        }
+
+        stage('Push imagen') {
+            agent any
+            when {
+                branch 'main'
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DH_USER', passwordVariable: 'DH_TOKEN')]) {
+                    sh '''
+                        echo "$DH_TOKEN" | docker login -u "$DH_USER" --password-stdin
+                        docker tag ${IMAGE}:${BUILD_NUMBER} ${IMAGE}:latest
+                        docker push ${IMAGE}:${BUILD_NUMBER}
+                        docker push ${IMAGE}:latest
+                        docker logout
+                    '''
+                }
+            }
+        }
+    }
+}

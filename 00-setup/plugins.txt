@@ -1,0 +1,25 @@
+# Same set the setup wizard calls "suggested", plus configuration-as-code for the
+# extra module. Deliberately NOT here (students install them by hand in module 8):
+#   pipeline-graph-view
+#   docker-workflow
+cloudbees-folder
+antisamy-markup-formatter
+build-timeout
+credentials-binding
+timestamper
+ws-cleanup
+ant
+gradle
+workflow-aggregator
+github-branch-source
+pipeline-github-lib
+pipeline-stage-view
+git
+ssh-slaves
+matrix-auth
+pam-auth
+ldap
+email-ext
+mailer
+dark-theme
+configuration-as-code

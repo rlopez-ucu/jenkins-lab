@@ -1,0 +1,10 @@
+# Extra module 12: Jenkins configured from code. Skips the setup wizard.
+# Usage:  docker compose -f docker-compose.yml -f docker-compose.casc.yml up -d
+services:
+  jenkins:
+    environment:
+      JAVA_OPTS: "-Djenkins.install.runSetupWizard=false"
+      CASC_JENKINS_CONFIG: /var/jenkins_conf/jenkins.yaml
+      JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:-admin123}
+    volumes:
+      - ./casc:/var/jenkins_conf:ro

@@ -1,0 +1,98 @@
+pipeline {
+    agent any
+
+    options {
+        timestamps()
+    }
+
+    environment {
+        IMAGE = "<usuario-dockerhub>/libreria-api"
+        SMOKE = "smoke-${BUILD_NUMBER}"
+    }
+
+    parameters {
+        booleanParam(name: 'EJECUTAR_TESTS', defaultValue: true, description: 'Correr los tests')
+    }
+
+    stages {
+        stage('Info') {
+            steps {
+                echo "Rama: ${env.BRANCH_NAME}"
+                echo "PR: ${env.CHANGE_ID ?: 'no es un PR'}"
+                sh 'git log -1 --oneline'
+            }
+        }
+
+        stage('Instalar dependencias') {
+            steps {
+                sh '''
+                    python3 -m venv .venv
+                    . .venv/bin/activate
+                    pip install --quiet -r requirements.txt
+                '''
+            }
+        }
+
+        stage('Lint') {
+            steps {
+                sh '''
+                    . .venv/bin/activate
+                    ruff check .
+                '''
+            }
+        }
+
+        stage('Test') {
+            when {
+                expression { params.EJECUTAR_TESTS }
+            }
+            steps {
+                sh '''
+                    . .venv/bin/activate
+                    pytest --junitxml=reports/junit.xml
+                '''
+            }
+        }
+
+        stage('Build imagen') {
+            steps {
+                sh 'docker build --build-arg APP_VERSION=${BUILD_NUMBER} -t ${IMAGE}:${BUILD_NUMBER} .'
+            }
+        }
+
+        stage('Smoke test') {
+            steps {
+                sh '''
+                    docker run -d --rm --name ${SMOKE} --network jenkins_net ${IMAGE}:${BUILD_NUMBER}
+                    sleep 3
+                    curl -sf http://${SMOKE}:5000/health
+                    echo
+                '''
+            }
+        }
+
+        stage('Push imagen') {
+            when {
+                branch 'main'
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DH_USER', passwordVariable: 'DH_TOKEN')]) {
+                    sh '''
+                        echo "$DH_TOKEN" | docker login -u "$DH_USER" --password-stdin
+                        docker tag ${IMAGE}:${BUILD_NUMBER} ${IMAGE}:latest
+                        docker push ${IMAGE}:${BUILD_NUMBER}
+                        docker push ${IMAGE}:latest
+                        docker logout
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker rm -f ${SMOKE} 2>/dev/null || true'
+            junit allowEmptyResults: true, testResults: 'reports/junit.xml'
+        }
+    }
+}
